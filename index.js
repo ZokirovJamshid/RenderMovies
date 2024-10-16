@@ -4,11 +4,41 @@ const elForm = document.querySelector('.form');
 const elGenres = document.querySelector('#genre');
 const elMovieTitle = document.getElementById('movieTitle'); // Film nomi inputi
 const elBookmarkList = document.querySelector('#bookmarkedMoviesList');
-const elBookmarked = [];
+const localData = JSON.parse(window.localStorage.getItem('bookmark')) || []; // Dastlabki bookmarklar
+let elBookmarked = localData; // Saqlangan bookmarklar
 let counter = 0;
 
 // Dastlabki film soni
 searchResult.textContent = films.length;
+
+// Dastlabki yuklash: bookmark ro'yxatini ko'rsatish
+const renderBookmarkList = function() {
+    elBookmarkList.innerHTML = '';
+    elBookmarked.forEach(function(bookmark) {
+        const newLi = document.createElement('li');
+        const removeBtn = document.createElement('button');
+
+        removeBtn.textContent = 'Remove';
+        newLi.textContent = bookmark.title;
+
+        removeBtn.addEventListener('click', function() {
+            elBookmarkList.removeChild(newLi);
+            elBookmarked.splice(elBookmarked.indexOf(bookmark), 1);
+            window.localStorage.setItem('bookmark', JSON.stringify(elBookmarked));
+            if (elBookmarked.length === 0) {
+                window.localStorage.removeItem('bookmark');
+            }
+        });
+
+        elBookmarkList.appendChild(newLi);
+        newLi.appendChild(removeBtn);
+    });
+};
+
+// Dastlabki yuklash
+if (localData.length > 0) {
+    renderBookmarkList();
+}
 
 // Qidiruv funksiyasi
 elForm.addEventListener('submit', function(evt) {
@@ -37,30 +67,13 @@ elForm.addEventListener('submit', function(evt) {
 // Bookmark funksiyasi
 elList.addEventListener('click', function(evt) {
     const bookmarkId = evt.target.dataset.bookmarkBtnId * 1;
-    const foundBookmarkIndex = films.filter(todo => todo.release_date === bookmarkId);
+    const foundBookmarkIndex = films.find(film => film.release_date === bookmarkId);
 
     if (evt.target.matches('.bookmark')) {
-        if (!elBookmarked.includes(foundBookmarkIndex[0])) {
-            elBookmarked.push(foundBookmarkIndex[0]);
-
-            elBookmarkList.innerHTML = null;
-
-            elBookmarked.forEach(function(bookmark) {
-                const newLi = document.createElement('li');
-                const removeBtn = document.createElement('button');
-
-                removeBtn.textContent = 'Remove';
-                newLi.textContent = bookmark.title;
-
-                // Remove tugmasiga bosilganda olib tashlash funksiyasi
-                removeBtn.addEventListener('click', function() {
-                    elBookmarkList.removeChild(newLi);
-                    elBookmarked.splice(elBookmarked.indexOf(bookmark), 1);
-                });
-
-                elBookmarkList.appendChild(newLi);
-                newLi.appendChild(removeBtn);
-            });
+        if (!elBookmarked.includes(foundBookmarkIndex)) {
+            elBookmarked.push(foundBookmarkIndex);
+            window.localStorage.setItem('bookmark', JSON.stringify(elBookmarked));
+            renderBookmarkList(); // Yangilangan bookmark ro'yxatini ko'rsatish
         }
     }
 });
